@@ -20,7 +20,7 @@ events.listen('recipes', function (event) {
             "type": "botania:terra_plate",
             "mana": mana,
             "ingredients": Ingredient.of(ingredients).toJson(),
-            "result": Item.of(result).toJson()
+            "result": Item.of(result).toResultJson()
         });
     };
     
@@ -36,7 +36,7 @@ events.listen('recipes', function (event) {
     const runic_altar = (output, ingredients, mana) => {
         event.custom({
           "type": "botania:runic_altar",
-          "output": Item.of(output).toJson(),
+          "output": Item.of(output).toResultJson(),
           "mana": mana,
           "ingredients": Ingredient.of(ingredients).toJson()
         });
@@ -90,7 +90,7 @@ events.listen('recipes', function (event) {
     const petal_apothecary = (output, ingredients) => {
         event.custom({
             "type": "botania:petal_apothecary",
-            "output": Item.of(output).toJson(),
+            "output": Item.of(output).toResultJson(),
             "ingredients": Ingredient.of(ingredients).toJson()
         });
     };
@@ -109,7 +109,7 @@ events.listen('recipes', function (event) {
         let tempRecipe = {
             "type": "botania:mana_infusion",
             "input": Item.of(input).toJson(),
-            "output": Item.of(output).toJson(),
+            "output": Item.of(output).toResultJson(),
             "mana": mana
         };
         // Check if catalyst was specified.
@@ -149,12 +149,10 @@ events.listen('recipes', function (event) {
     // ------------------------
     // Reference: https://github.com/Vazkii/Botania/blob/master/src/generated/resources/data/botania/recipes/elven_trade/elementium_block.json
     const eleven_trade = (outputs, ingredients) => {
-        let output = [];
-        outputs.forEach( out =>{output.push(Item.of(output).toJson())});
         event.custom({
             "type": "botania:elven_trade",
             "ingredients": Ingredient.of(ingredients).toJson(),
-            "output": output
+            "output": outputs.map(o => Item.of(o).toResultJson())
         });
     };
     
@@ -177,7 +175,68 @@ events.listen('recipes', function (event) {
     // Example(s):
     botania_brew('botania:healing',['minecraft:cobblestone','minecraft:iron_ingot']);
     
+    // ------------------------
+    //     Pneumatic RECIPE:
+    //       Thermo Plant
+    // ------------------------
+    // Reference: https://github.com/TeamPneumatic/pnc-repressurized/blob/1.16.4/src/generated/resources/data/pneumaticcraft/recipes/thermo_plant/chips.json
+    class ThermoPlant{
+        constructor(exothermic){
+            this.output = {
+                "type": "pneumaticcraft:thermo_plant",
+                "exothermic": exothermic
+            };
+        }
+        itemInput(inputItem){
+            this.output["item_input"] = Ingredient.of(inputItem).toJson()
+            return this;
+        }
+        itemOutput(outputItem){
+            this.output["item_output"] = Item.of(outputItem).toResultJson()
+            return this;
+        }
+        fluidInput(inputFluid){
+            this.output["fluid_input"] = Fluid.of(inputFluid).toJson()
+            return this;
+        }
+        fluidOutput(outputFluid){
+            this.output["fluid_output"] = Fluid.of(outputFluid).toJson()
+            return this;
+        }
+        temperature(min_temp, max_temp){
+            if(max_temp !== null && max_temp !== undefined){
+                this.output["temperature"] = {
+                    "min_temp": min_temp,
+                    "max_temp": max_temp
+                };
+            }else{
+                this.output["temperature"] = {
+                    "min_temp": min_temp
+                }
+            }
+            return this;
+        }
+        speed(speed){
+            this.output["speed"] = speed;
+            return this;
+        }
+        pressure(presure){
+            this.output["pressure"]=presure;
+            return this;
+        }
+        create() {
+            event.custom(this.output);
+        }
+    }
     
+    // Example(s):
+    new ThermoPlant(false)
+    .itemInput('forge:dusts/redstone')
+    .fluidInput(Fluid.of('forge:biodiesel',1000))
+    .fluidInput(Fluid.of('pneumaticcraft:lubricant',1000))
+    .temperature(373,400)
+    .speed(3.0)
+    .create(); // Creates the actual recipe.
 });
 
 
